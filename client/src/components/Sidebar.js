@@ -4,6 +4,7 @@ import Axios from '../../axios';
 import { User, MoreVertical, Settings, LogOut, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import Loader from './Loader';
 
 const Sidebar = ({ selectedUser, setSelectedUser }) => {
     const { logout, onlineUsers, socket, user: currentUser } = useAuth();
@@ -84,14 +85,14 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
     );
 
     if (loading) return (
-        <div className="h-full bg-[#111b21] flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[#00a884] border-t-transparent rounded-full animate-spin"></div>
+        <div className="h-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
 
     return (
-        <div className="h-full flex flex-col bg-[#111b21] w-full border-r border-[#313d45]">
-            <div className="bg-[#202c33] px-4 py-[10px] flex justify-between items-center shrink-0">
+        <div className="h-full flex flex-col bg-white/5 backdrop-blur-md border border-white/10  w-full border-r ">
+            <div className=" px-4 py-[10px] flex justify-between items-center shrink-0">
                 <div className="cursor-pointer">
                     {currentUser?.profilePic ? (
                         <img src={currentUser.profilePic} className="w-10 h-10 rounded-full object-cover" alt="Me" />
@@ -111,7 +112,7 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
                     </button>
 
                     {showMenu && (
-                        <div className="absolute right-0 top-12 w-48 bg-[#233138] shadow-xl z-50 py-2 rounded-sm border border-[#313d45]">
+                        <div className="absolute right-0 top-12 w-48 bg-black shadow-xl z-50 py-2 rounded-sm border border-[#313d45]">
                             <Link 
                                 href="/profile-page" 
                                 className="flex items-center gap-3 px-6 py-3 text-sm text-[#e9edef] hover:bg-[#182229] transition-colors cursor-pointer"
@@ -129,8 +130,8 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
                 </div>
             </div>
 
-            <div className="px-3 py-2 bg-[#111b21]">
-                <div className="relative flex items-center bg-[#202c33] rounded-lg px-3">
+            <div className="px-3 py-2 ">
+                <div className="relative flex items-center bg-zinc-900/80 rounded-lg px-3">
                     <Search className="w-4 h-4 text-[#8696a0]" />
                     <input 
                         type="text"

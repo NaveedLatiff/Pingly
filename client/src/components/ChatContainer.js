@@ -55,7 +55,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
     };
 
     return (
-        <div className="p-[10px] bg-[#202c33] shrink-0 border-t border-[#313d45] relative">
+        <div className="p-[10px] bg-white/5 backdrop-blur-md border border-white/10 shrink-0 border-t relative">
             {/* Emoji Picker Popover */}
             {showEmojiPicker && (
                 <div className="absolute bottom-[70px] left-2 z-50 shadow-2xl" ref={emojiPickerRef}>
@@ -71,7 +71,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
             )}
 
             {imagePreview && (
-                <div className="mb-3 relative w-24 h-24 bg-[#111b21] p-2 rounded-lg border border-[#313d45]">
+                <div className="mb-3 relative w-24 h-24  rounded-lg border border-[#313d45]">
                     <img src={imagePreview} className="w-full h-full object-cover rounded-md" alt="" />
                     <button 
                         type="button"
@@ -88,7 +88,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
                     <button 
                         type="button"
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className={`transition-colors ${showEmojiPicker ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef]'}`}
+                        className={`transition-colors ${showEmojiPicker ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef] cursor-pointer'}`}
                     >
                         <Smile className="w-6 h-6" />
                     </button>
@@ -107,7 +107,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
                     
                     <button 
                         type="button" onClick={() => fileInputRef.current?.click()} 
-                        className="text-[#8696a0] hover:text-[#e9edef] transition-colors"
+                        className="text-[#8696a0] hover:text-[#e9edef] transition-colors cursor-pointer"
                     >
                         <ImageIcon className="w-6 h-6" />
                     </button>
@@ -116,7 +116,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
                 <input 
                     type="text" 
                     placeholder="Type a message" 
-                    className="flex-1 bg-[#2a3942] border-none rounded-lg py-2.5 px-4 text-[15px] text-[#d1d7db] outline-none placeholder:text-[#8696a0]" 
+                    className="flex-1 bg-zinc-900/80 border-none rounded-lg py-2.5 px-4 text-[15px] text-[#d1d7db] outline-none placeholder:text-[#8696a0]" 
                     value={text} 
                     onChange={(e) => setText(e.target.value)} 
                     onFocus={() => setShowEmojiPicker(false)}
@@ -125,7 +125,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
                 <button 
                     type="submit" 
                     disabled={isSending || (!text.trim() && !imagePreview)} 
-                    className="text-[#8696a0] hover:text-[#00a884] disabled:opacity-30 transition-colors"
+                    className="text-[#8696a0] hover:text-[#00a884] disabled:opacity-30 cursor-pointer transition-colors"
                 >
                     {isSending ? <Loader className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                 </button>
@@ -195,13 +195,13 @@ const ChatContainer = ({ selectedUser, setSelectedUser, messages, setMessages })
     }, [selectedUser?._id, setMessages]);
 
     return (
-        <div className="flex-1 flex flex-col h-full min-h-0 bg-[#0b141a] overflow-hidden relative">
+        <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative">
             {/* Header */}
-            <header className="h-[59px] min-h-[59px] px-4 bg-[#202c33] flex items-center justify-between shrink-0 z-20 border-b border-[#313d45]/50">
+            <header className="h-[59px] min-h-[59px] px-4  flex items-center justify-between shrink-0 z-20 bg-white/5 backdrop-blur-md border border-white/10">
                 <div className="flex items-center gap-3 min-w-0">
                     <button 
                         onClick={() => setSelectedUser(null)} 
-                        className="md:hidden p-1 -ml-2 text-[#8696a0] hover:bg-[#2a3942] rounded-full transition-colors"
+                        className="md:hidden p-1 -ml-2 text-[#8696a0] hover:bg-[#2a3942] cursor-pointer rounded-full transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </button>
@@ -228,17 +228,14 @@ const ChatContainer = ({ selectedUser, setSelectedUser, messages, setMessages })
 
                 <button 
                     onClick={() => setSelectedUser(null)}
-                    className="p-2 text-[#8696a0] hover:bg-[#2a3942] rounded-full transition-all group"
+                    className="p-2 text-[#8696a0] hover:bg-[#2a3942] rounded-full transition-all group cursor-pointer"
                     title="Close chat"
                 >
                     <X className="w-5 h-5 group-hover:text-[#ea5664]" />
                 </button>
             </header>
 
-            <main className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar-style relative bg-[#0b141a]">
-                <div className="absolute inset-0 opacity-[0.06] pointer-events-none" 
-                     style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')" }}>
-                </div>
+            <main className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar-style relative bg-white/5 backdrop-blur-md border border-white/10 ">
                 
                 <style jsx>{`
                     .custom-scrollbar-style::-webkit-scrollbar { width: 6px; }
@@ -247,7 +244,7 @@ const ChatContainer = ({ selectedUser, setSelectedUser, messages, setMessages })
                 
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
-                        <Loader className="animate-spin text-[#00a884] w-10 h-10" />
+                        <Loader/>
                     </div>
                 ) : (
                     <div className="relative z-10 flex flex-col gap-1">

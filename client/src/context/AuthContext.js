@@ -1,9 +1,10 @@
-"use client"
+"use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import Axios from "../../axios";
 import { useRouter, usePathname } from "next/navigation";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
+import Loader from "@/components/Loader";
 
 const AuthContext = createContext();
 const SOCKET_URL = "http://localhost:3003"; 
@@ -59,29 +60,39 @@ export const AuthProvider = ({ children }) => {
             if (res.data.success) {
                 setUser(res.data.user);
                 connectSocket(res.data.user._id);
-                toast.success(`Welcome back, ${res.data.user.fullName}`);
+                // SUCCESS MESSAGE
+                toast.success(`Welcome back, ${res.data.user.fullName || 'User'}!`);
                 router.push("/");
+                return res.data;
+            } else {
+                // If backend returns success: false
+                toast.error(res.data.message || "Login failed");
             }
-            return res.data;
         } catch (error) {
-            const msg = error.response?.data?.message || "Login failed";
+            // ERROR MESSAGE (Backend error or Network error)
+            const msg = error.response?.data?.message || "Invalid email or password";
             toast.error(msg);
             return { success: false, message: msg };
         }
     };
 
-    const signup = async (formData) => {
+    // RENAMED TO 'register' to match your AuthPage.jsx UI
+    const register = async (formData) => {
         try {
             const res = await Axios.post("/auth/register", formData);
             if (res.data.success) {
                 setUser(res.data.user);
                 connectSocket(res.data.user._id);
+                // SUCCESS MESSAGE
                 toast.success("Account created successfully!");
                 router.push("/");
+                return res.data;
+            } else {
+                toast.error(res.data.message || "Registration failed");
             }
-            return res.data;
         } catch (error) {
-            const msg = error.response?.data?.message || "Registration failed";
+            // ERROR MESSAGE
+            const msg = error.response?.data?.message || "Registration failed. Try again.";
             toast.error(msg);
             return { success: false, message: msg };
         }
@@ -96,10 +107,10 @@ export const AuthProvider = ({ children }) => {
             router.push("/login");
         } catch (error) {
             toast.error("Logout failed");
-            console.error("Logout failed", error);
         }
     };
 
+    // Route Protection Logic
     useEffect(() => {
         if (!loading) {
             const publicPages = ["/login", "/signup"];
@@ -114,34 +125,12 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ 
-            user, loading, login, signup, logout, socket, onlineUsers, setUser, connectSocket 
+            user, loading, login, register, logout, socket, onlineUsers, setUser, connectSocket 
         }}>
-            {!loading ? children : (
-                <div className="h-screen w-screen bg-[#0b141a] flex flex-col items-center justify-center">
-                    <div className="relative w-20 h-20 mb-8">
-                        <div className="absolute inset-0 border-4 border-[#202c33] rounded-full"></div>
-                        <div className="absolute inset-0 border-4 border-[#00a884] rounded-full border-t-transparent animate-spin"></div>
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-2">
-                        <h1 className="text-[#e9edef] text-xl font-light tracking-wider">QuickChat</h1>
-                        <div className="flex items-center gap-2 text-[#8696a0] text-sm font-light">
-                            <span className="animate-pulse">End-to-end encrypted</span>
-                        </div>
-                    </div>
-
-                    <div className="absolute bottom-10 w-48 h-1 bg-[#202c33] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#00a884] w-1/2 animate-[loading_1.5s_ease-in-out_infinite]"></div>
-                    </div>
-
-                    <style jsx>{`
-                        @keyframes loading {
-                            0% { transform: translateX(-100%); }
-                            100% { transform: translateX(200%); }
-                        }
-                    `}</style>
-                </div>
-            )}
+            {!loading ? 
+            children :
+            <Loader/>
+            }
         </AuthContext.Provider>
     );
 };
