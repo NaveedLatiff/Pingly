@@ -1,0 +1,31 @@
+name: Pingly CI-CD
+
+on:
+  push:
+    branches: [ master] 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/Pingly
+            git pull origin main
+            
+            export NEXT_PUBLIC_BACKEND_URL="http://${{ secrets.EC2_HOST }}:3003"
+
+            # Stop current containers to avoid port conflicts
+            docker-compose down
+            
+            # Build and start with the latest code
+            # --build is essential here to re-bake the Next.js environment variables
+            docker-compose up --build -d
