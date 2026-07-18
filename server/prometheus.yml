@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: 'pingly_backend'
+    static_configs:
+      - targets: ['backend:3003'] # This 'backend' matches the service name above

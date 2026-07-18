@@ -48,7 +48,7 @@ const MessageInput = ({ selectedUser, setMessages }) => {
                 if (fileInputRef.current) fileInputRef.current.value = "";
             }
         } catch (error) {
-            toast.error("Failed to send message");
+            toast.error( "Failed to send message");
         } finally {
             setIsSending(false);
         }

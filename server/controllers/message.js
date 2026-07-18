@@ -2,6 +2,7 @@ import { userSocketMap } from "../app.js";
 import cloudinary from "../config/cloudinary.js";
 import User from "../models/auth.js";
 import Message from "../models/message.js";
+import { imageUploads, imageUploadDuration, messagesProcessed } from '../metrics.js';
 
 export const getUsersForSidebar = async (req, res) => {
     try {
@@ -99,8 +100,17 @@ export const sendMessage = async (req, res) => {
 
         let imageUrl;
         if (image) {
-            const uploadedImage = await cloudinary.uploader.upload(image);
-            imageUrl = uploadedImage.secure_url;
+            const endUploadTimer = imageUploadDuration.startTimer({ context: 'message' });
+            try {
+                const uploadedImage = await cloudinary.uploader.upload(image);
+                imageUploads.inc({ context: 'message', outcome: 'success' });
+                endUploadTimer({ outcome: 'success' });
+                imageUrl = uploadedImage.secure_url;
+            } catch (error) {
+                imageUploads.inc({ context: 'message', outcome: 'error' });
+                endUploadTimer({ outcome: 'error' });
+                throw error;
+            }
         }
 
         const newMessage = await Message.create({
@@ -110,6 +120,7 @@ export const sendMessage = async (req, res) => {
             image: imageUrl,
             seen: false
         });
+        messagesProcessed.inc({ content_type: image ? 'image' : 'text', outcome: 'success' });
 
         const receiverSocketId = userSocketMap[receiverId];
 
@@ -128,6 +139,11 @@ export const sendMessage = async (req, res) => {
         });
 
     } catch (err) {
-        return res.status(500).json({ success: false, message: err.message });
-    }
+    messagesProcessed.inc({ content_type: req.body.image ? 'image' : 'text', outcome: 'error' });
+    console.error("Send message failed:", err);
+    return res.status(500).json({
+        success: false,
+        message: err.message || "Unable to send message",
+    });
+}
 }

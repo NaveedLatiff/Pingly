@@ -2,17 +2,20 @@ import jwt from "jsonwebtoken";
 import User from "../models/auth.js";
 import bcrypt from 'bcryptjs'
 import cloudinary from "../config/cloudinary.js";
+import { authAttempts, imageUploads, imageUploadDuration } from '../metrics.js';
 
 export const register = async (req, res) => {
     const { fullName, email, password } = req.body;
 
     if (!fullName || !email || !password) {
+        authAttempts.inc({ action: 'register', outcome: 'invalid' });
         return res.json({ success: false, message: "Please Fill In All The Fields" });
     }
 
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+            authAttempts.inc({ action: 'register', outcome: 'rejected' });
             return res.json({ success: false, message: "User Already Exists" });
         }
 
@@ -24,6 +27,7 @@ export const register = async (req, res) => {
             password: hashedPassword,
 
         });
+        authAttempts.inc({ action: 'register', outcome: 'success' });
 
         const token = jwt.sign({ id: user._id }, process.env.SESSION_SECRET, { expiresIn: '7d' });
 
@@ -41,6 +45,7 @@ export const register = async (req, res) => {
         });
 
     } catch (err) {
+        authAttempts.inc({ action: 'register', outcome: 'error' });
         res.json({
             success: false,
             message: "Internal Server Error"
@@ -52,6 +57,7 @@ export const login = async (req, res) => {
     const { email, password } = req.body
 
     if (!email || !password) {
+        authAttempts.inc({ action: 'login', outcome: 'invalid' });
         return res.json({
             success: false,
             message: "Please Fill In All The Fields"
@@ -60,6 +66,7 @@ export const login = async (req, res) => {
     try {
         const user = await User.findOne({ email })
         if (!user) {
+            authAttempts.inc({ action: 'login', outcome: 'rejected' });
             return res.json({
                 success: false,
                 message: "Invalid Email"
@@ -68,6 +75,7 @@ export const login = async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.password)
         if (!isMatch) {
+            authAttempts.inc({ action: 'login', outcome: 'rejected' });
             return res.json({
                 success: false,
                 message: "Invalid Password"
@@ -75,6 +83,7 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, process.env.SESSION_SECRET, { expiresIn: '7d' })
+        authAttempts.inc({ action: 'login', outcome: 'success' });
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -90,6 +99,7 @@ export const login = async (req, res) => {
         })
 
     } catch (err) {
+        authAttempts.inc({ action: 'login', outcome: 'error' });
         res.json({
             success: false,
             message: "Internal Server Error"
@@ -161,10 +171,19 @@ export const updateProfile = async (req, res) => {
         let updateData = { fullName, bio };
 
         if (profilePic) {
-            const uploadResponse = await cloudinary.uploader.upload(profilePic, {
-                folder: "chatapp-profileImages",
-            });
-            updateData.profilePic = uploadResponse.secure_url;
+            const endUploadTimer = imageUploadDuration.startTimer({ context: 'profile' });
+            try {
+                const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+                    folder: "chatapp-profileImages",
+                });
+                imageUploads.inc({ context: 'profile', outcome: 'success' });
+                endUploadTimer({ outcome: 'success' });
+                updateData.profilePic = uploadResponse.secure_url;
+            } catch (error) {
+                imageUploads.inc({ context: 'profile', outcome: 'error' });
+                endUploadTimer({ outcome: 'error' });
+                throw error;
+            }
         }
 
         const updatedUser = await User.findByIdAndUpdate(
