@@ -1,3 +1,4 @@
+import './tracing.js';
 import express from "express";
 import cors from "cors";
 import 'dotenv/config';
@@ -5,6 +6,7 @@ import http from "http";
 import { Server } from "socket.io";
 import mongoose from 'mongoose';
 import cookieParser from "cookie-parser";
+import { trace } from '@opentelemetry/api';
 import connectDB from "./config/mongodb.js";
 import authRouter from "./routes/auth.js";
 import messageRouter from "./routes/message.js";
@@ -13,6 +15,7 @@ import { register, httpRequestCounter, httpRequestDuration, activeSocketConnecti
 
 const app = express();
 const server = http.createServer(app);
+const tracer = trace.getTracer('pingly-server');
 
 // 1. Core Middlewares (Placed at top for proper metric capture)
 app.use(cors({
@@ -51,6 +54,21 @@ app.get('/health', (req, res) => {
     res.status(databaseConnected ? 200 : 503).json({
         status: databaseConnected ? 'ok' : 'degraded',
         database: databaseConnected ? 'connected' : 'disconnected',
+    });
+});
+
+app.get('/tracing-test', async (req, res) => {
+    await tracer.startActiveSpan('tracing-test-span', async (span) => {
+        try {
+            span.setAttribute('test.route', '/tracing-test');
+            span.addEvent('entered tracing-test route');
+            res.json({ message: 'Tracing test route executed' });
+        } catch (error) {
+            span.recordException(error);
+            res.status(500).json({ error: 'Tracing test route failed' });
+        } finally {
+            span.end();
+        }
     });
 });
 
