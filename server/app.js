@@ -36,7 +36,7 @@ app.use((req, res, next) => {
         const seconds = duration[0] + duration[1] / 1e9;
         const route = req.route ? req.route.path : req.path;
         const labels = { method: req.method, route, status_code: res.statusCode };
-
+        
         httpRequestCounter.inc(labels);
         httpRequestDuration.observe(labels, seconds);
     });
@@ -59,7 +59,7 @@ app.get('/health', (req, res) => {
 
 app.get('/tracing-test', async (req, res) => {
     await tracer.startActiveSpan('tracing-test-span', async (span) => {
-        try {
+        try {   
             span.setAttribute('test.route', '/tracing-test');
             span.addEvent('entered tracing-test route');
             res.json({ message: 'Tracing test route executed' });
